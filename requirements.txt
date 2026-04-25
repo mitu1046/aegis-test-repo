@@ -1,0 +1,6 @@
+flask==2.0.1
+sqlite3
+PyJWT==2.1.0
+requests==2.25.1
+cryptography==3.4.7
+pickle-mixin==1.0.2
