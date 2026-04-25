@@ -3,7 +3,7 @@ import sqlite3
 def get_user(username):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
     result = cursor.fetchone()
     conn.close()
     return result
@@ -11,7 +11,7 @@ def get_user(username):
 def search_users(search_term):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM users WHERE name LIKE '%{search_term}%'")
+    cursor.execute('SELECT * FROM users WHERE name LIKE ?', (f'%{search_term}%',))
     results = cursor.fetchall()
     conn.close()
     return results
