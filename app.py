@@ -1,19 +1,15 @@
 import sqlite3
-import os
 import pickle
 import base64
-import subprocess
 import hashlib
+import json
+import os
 
 # Vulnerability 1: Hardcoded AWS Credentials
-AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
-AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+AWS_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
-# Vulnerability 2: Hardcoded Database Password
-DB_PASSWORD = "super_secret_db_password_123"
-
-def get_user(username):
-    # Vulnerability 3: SQL Injection (f-string)
+def get_user_by_name(username):
+    # Vulnerability 2: SQL Injection
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
     cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
@@ -21,39 +17,14 @@ def get_user(username):
     conn.close()
     return result
 
-def search_users(search_term):
-    # Vulnerability 4: SQL Injection (string concatenation)
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE name LIKE '%" + search_term + "%'")
-    results = cursor.fetchall()
-    conn.close()
-    return results
+def load_user_prefs(prefs_data_base64):
+    # Vulnerability 3: Insecure Deserialization
+    decoded_data = base64.b64decode(prefs_data_base64)
+    prefs = pickle.loads(decoded_data)
+    return prefs
 
-def ping_server(host):
-    # Vulnerability 5: Command Injection (os.system with user input)
-    command = f"ping -c 1 {host}"
-    print(f"Executing: {command}")
-    return os.system(command)
-
-def execute_system_command(cmd):
-    # Vulnerability 6: Command Injection (subprocess with shell=True)
-    return subprocess.check_output(cmd, shell=True)
-
-def read_file(filename):
-    # Vulnerability 7: Path Traversal
-    filepath = os.path.join('/var/www/uploads', filename)
-    with open(filepath, 'r') as f:
-        return f.read()
-
-def load_user_session(session_data):
-    # Vulnerability 8: Insecure Deserialization (pickle)
-    decoded_data = base64.b64decode(session_data)
-    session = pickle.loads(decoded_data)
-    return session
-
-def hash_password(password):
-    # Vulnerability 9: Weak Cryptographic Hashing (MD5)
+def store_password(password):
+    # Vulnerability 4: Weak Cryptographic Hashing
     m = hashlib.md5()
     m.update(password.encode('utf-8'))
     return m.hexdigest()
