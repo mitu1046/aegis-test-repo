@@ -13,7 +13,7 @@ def get_user(username):
     # Vulnerability 2: SQL Injection (f-string)
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
     result = cursor.fetchone()
     conn.close()
     return result
@@ -22,7 +22,7 @@ def search_users(search_term):
     # Vulnerability 3: SQL Injection (f-string)
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM users WHERE name LIKE '%{search_term}%'")
+    cursor.execute('SELECT * FROM users WHERE name LIKE ?', (f'%{search_term}%',))
     results = cursor.fetchall()
     conn.close()
     return results
