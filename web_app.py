@@ -32,7 +32,7 @@ def login():
     # Vulnerability 4: SQL Injection in login
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
+    query = "SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
     cursor.execute(query)
     user = cursor.fetchone()
     conn.close()
@@ -49,7 +49,7 @@ def search():
     # Vulnerability 5: SQL Injection in search
     conn = sqlite3.connect('products.db')
     cursor = conn.cursor()
-    sql = f"SELECT * FROM products WHERE name LIKE '%{query}%'"
+    sql = "SELECT * FROM products WHERE name LIKE '%{query}%'"
     cursor.execute(sql)
     results = cursor.fetchall()
     conn.close()
