@@ -10,19 +10,19 @@ AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 DB_PASSWORD = "super_secret_db_password_123"
 
 def get_user(username):
-    # Vulnerability 2: SQL Injection (f-string)
+    # Vulnerability 2: SQL Injection (f-string) -> Fixed with parameterized query
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     result = cursor.fetchone()
     conn.close()
     return result
 
 def search_users(search_term):
-    # Vulnerability 3: SQL Injection (f-string)
+    # Vulnerability 3: SQL Injection (f-string) -> Fixed with parameterized query
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM users WHERE name LIKE '%{search_term}%'")
+    cursor.execute("SELECT * FROM users WHERE name LIKE ?", (f"%{search_term}%",))
     results = cursor.fetchall()
     conn.close()
     return results
@@ -55,13 +55,11 @@ def execute_command(user_input):
     return result.stdout
 
 def get_admin_users():
-    # Vulnerability 8: Another SQL Injection variant
+    # Vulnerability 8: Another SQL Injection variant -> Fixed with parameterized query
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
     role = "admin"
-    # This looks safe but is still vulnerable if role comes from user input
-    query = f"SELECT * FROM users WHERE role = '{role}' AND active = 1"
-    cursor.execute(query)
+    cursor.execute("SELECT * FROM users WHERE role = ? AND active = 1", (role,))
     results = cursor.fetchall()
     conn.close()
     return results
