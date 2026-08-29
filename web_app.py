@@ -15,25 +15,25 @@ import base64
 
 app = Flask(__name__)
 
-# Vulnerability 1: Hardcoded secret key
-app.secret_key = "hardcoded_secret_key_123"
+# Vulnerability 1: Hardcoded secret key -> use environment variable
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key")
 
-# Vulnerability 2: Hardcoded JWT secret
-JWT_SECRET = "super_secret_jwt_key"
+# Vulnerability 2: Hardcoded JWT secret -> use environment variable
+JWT_SECRET = os.getenv("JWT_SECRET", "default_jwt_secret")
 
-# Vulnerability 3: Hardcoded database credentials
-DATABASE_URL = "postgresql://admin:password123@localhost/mydb"
+# Vulnerability 3: Hardcoded database credentials -> use environment variable
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password123@localhost/mydb")
 
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
     password = request.form['password']
     
-    # Vulnerability 4: SQL Injection in login
+    # Vulnerability 4: SQL Injection in login -> parameterized query
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
-    cursor.execute(query)
+    query = "SELECT * FROM users WHERE username = ? AND password = ?"
+    cursor.execute(query, (username, password))
     user = cursor.fetchone()
     conn.close()
     
@@ -46,11 +46,11 @@ def login():
 def search():
     query = request.args.get('q', '')
     
-    # Vulnerability 5: SQL Injection in search
+    # Vulnerability 5: SQL Injection in search -> parameterized query
     conn = sqlite3.connect('products.db')
     cursor = conn.cursor()
-    sql = f"SELECT * FROM products WHERE name LIKE '%{query}%'"
-    cursor.execute(sql)
+    sql = "SELECT * FROM products WHERE name LIKE ?"
+    cursor.execute(sql, (f"%{query}%",))
     results = cursor.fetchall()
     conn.close()
     
@@ -63,8 +63,8 @@ def ping():
     host = request.args.get('host', 'localhost')
     
     # Vulnerability 7: Command Injection
-    command = f"ping -c 1 {host}"
-    result = os.system(command)
+    command = ["ping", "-c", "1", host]
+    result = subprocess.call(command)
     return f"Ping result: {result}"
 
 @app.route('/file')
@@ -86,7 +86,10 @@ def execute():
     
     # Vulnerability 9: Command Injection via subprocess
     try:
-        result = subprocess.check_output(cmd, shell=True, text=True)
+        # Use shlex.split to safely parse command arguments without shell=True
+        import shlex
+        args = shlex.split(cmd)
+        result = subprocess.check_output(args, text=True)
         return f"<pre>{result}</pre>"
     except:
         return "Command failed"
@@ -97,7 +100,11 @@ def evaluate():
     
     # Vulnerability 10: Code Injection via eval
     try:
-        result = eval(expr)
+        # Restrict eval to arithmetic expressions only
+        allowed_chars = "0123456789+-*/(). "
+        if not all(c in allowed_chars for c in expr):
+            raise ValueError("Disallowed characters in expression")
+        result = eval(expr, {"__builtins__": {}}, {})
         return f"Result: {result}"
     except:
         return "Invalid expression"
@@ -149,4 +156,4 @@ def debug_info():
 
 if __name__ == '__main__':
     # Vulnerability 16: Debug mode in production
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
