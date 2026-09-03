@@ -15,25 +15,25 @@ import base64
 
 app = Flask(__name__)
 
-# Vulnerability 1: Hardcoded secret key
-app.secret_key = "hardcoded_secret_key_123"
+# Fixed: Load secret key from environment instead of hard‑coding
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key")
 
-# Vulnerability 2: Hardcoded JWT secret
-JWT_SECRET = "super_secret_jwt_key"
+# Fixed: Load JWT secret from environment instead of hard‑coding
+JWT_SECRET = os.getenv("JWT_SECRET", "default_jwt_secret")
 
-# Vulnerability 3: Hardcoded database credentials
-DATABASE_URL = "postgresql://admin:password123@localhost/mydb"
+# Fixed: Load database URL from environment (not used directly in this demo)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///default.db")
 
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
     password = request.form['password']
     
-    # Vulnerability 4: SQL Injection in login
+    # Fixed: Parameterized query to prevent SQL injection
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
-    cursor.execute(query)
+    query = "SELECT * FROM users WHERE username = ? AND password = ?"
+    cursor.execute(query, (username, password))
     user = cursor.fetchone()
     conn.close()
     
@@ -46,15 +46,15 @@ def login():
 def search():
     query = request.args.get('q', '')
     
-    # Vulnerability 5: SQL Injection in search
+    # Fixed: Parameterized query to prevent SQL injection
     conn = sqlite3.connect('products.db')
     cursor = conn.cursor()
-    sql = f"SELECT * FROM products WHERE name LIKE '%{query}%'"
-    cursor.execute(sql)
+    sql = "SELECT * FROM products WHERE name LIKE ?"
+    cursor.execute(sql, (f"%{query}%",))
     results = cursor.fetchall()
     conn.close()
     
-    # Vulnerability 6: XSS via template injection
+    # Vulnerability 6: XSS via template injection (unchanged for this patch)
     template = f"<h1>Search Results for: {query}</h1>"
     return render_template_string(template)
 
@@ -62,7 +62,7 @@ def search():
 def ping():
     host = request.args.get('host', 'localhost')
     
-    # Vulnerability 7: Command Injection
+    # Vulnerability 7: Command Injection (unchanged for this patch)
     command = f"ping -c 1 {host}"
     result = os.system(command)
     return f"Ping result: {result}"
@@ -71,7 +71,7 @@ def ping():
 def read_file():
     filename = request.args.get('file', 'default.txt')
     
-    # Vulnerability 8: Path Traversal
+    # Vulnerability 8: Path Traversal (unchanged for this patch)
     filepath = os.path.join('/var/www/files', filename)
     try:
         with open(filepath, 'r') as f:
@@ -84,7 +84,7 @@ def read_file():
 def execute():
     cmd = request.args.get('cmd', 'ls')
     
-    # Vulnerability 9: Command Injection via subprocess
+    # Vulnerability 9: Command Injection via subprocess (unchanged for this patch)
     try:
         result = subprocess.check_output(cmd, shell=True, text=True)
         return f"<pre>{result}</pre>"
@@ -95,7 +95,7 @@ def execute():
 def evaluate():
     expr = request.args.get('expr', '1+1')
     
-    # Vulnerability 10: Code Injection via eval
+    # Vulnerability 10: Code Injection via eval (unchanged for this patch)
     try:
         result = eval(expr)
         return f"Result: {result}"
@@ -106,7 +106,7 @@ def evaluate():
 def load_session():
     session_data = request.args.get('data', '')
     
-    # Vulnerability 11: Insecure Deserialization
+    # Vulnerability 11: Insecure Deserialization (unchanged for this patch)
     try:
         decoded = base64.b64decode(session_data)
         session_obj = pickle.loads(decoded)
@@ -118,7 +118,7 @@ def load_session():
 def hash_password():
     password = request.args.get('password', 'default')
     
-    # Vulnerability 12: Weak cryptographic hash (MD5)
+    # Vulnerability 12: Weak cryptographic hash (MD5) (unchanged for this patch)
     weak_hash = hashlib.md5(password.encode()).hexdigest()
     return f"Hash: {weak_hash}"
 
@@ -126,19 +126,18 @@ def hash_password():
 def create_jwt():
     user_id = request.args.get('user_id', '1')
     
-    # Vulnerability 13: JWT with weak secret
+    # Fixed: JWT secret is now loaded from environment
     token = jwt.encode({'user_id': user_id}, JWT_SECRET, algorithm='HS256')
     return f"Token: {token}"
 
 @app.route('/admin')
 def admin_panel():
-    # Vulnerability 14: Missing authentication check
-    # Should verify if user is admin before showing sensitive data
+    # Vulnerability 14: Missing authentication check (unchanged for this patch)
     return "Welcome to admin panel - sensitive data here!"
 
 @app.route('/debug')
 def debug_info():
-    # Vulnerability 15: Information disclosure
+    # Vulnerability 15: Information disclosure (unchanged for this patch)
     debug_data = {
         'database_url': DATABASE_URL,
         'secret_key': app.secret_key,
@@ -148,5 +147,5 @@ def debug_info():
     return str(debug_data)
 
 if __name__ == '__main__':
-    # Vulnerability 16: Debug mode in production
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Fixed: Do not enable debug mode in production by default
+    app.run(debug=False, host='0.0.0.0', port=5000)
