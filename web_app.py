@@ -16,24 +16,24 @@ import base64
 app = Flask(__name__)
 
 # Vulnerability 1: Hardcoded secret key
-app.secret_key = "hardcoded_secret_key_123"
+app.secret_key = os.getenv("APP_SECRET_KEY", "default_secret_key")
 
 # Vulnerability 2: Hardcoded JWT secret
-JWT_SECRET = "super_secret_jwt_key"
+JWT_SECRET = os.getenv("JWT_SECRET", "default_jwt_secret")
 
 # Vulnerability 3: Hardcoded database credentials
-DATABASE_URL = "postgresql://admin:password123@localhost/mydb"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password123@localhost/mydb")
 
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
     password = request.form['password']
     
-    # Vulnerability 4: SQL Injection in login
+    # Vulnerability 4: SQL Injection in login (fixed with parameterized query)
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
-    cursor.execute(query)
+    query = "SELECT * FROM users WHERE username = ? AND password = ?"
+    cursor.execute(query, (username, password))
     user = cursor.fetchone()
     conn.close()
     
@@ -46,11 +46,12 @@ def login():
 def search():
     query = request.args.get('q', '')
     
-    # Vulnerability 5: SQL Injection in search
+    # Vulnerability 5: SQL Injection in search (fixed with parameterized query)
     conn = sqlite3.connect('products.db')
     cursor = conn.cursor()
-    sql = f"SELECT * FROM products WHERE name LIKE '%{query}%'"
-    cursor.execute(sql)
+    sql = "SELECT * FROM products WHERE name LIKE ?"
+    like_param = f"%{query}%"
+    cursor.execute(sql, (like_param,))
     results = cursor.fetchall()
     conn.close()
     
