@@ -5,9 +5,9 @@ import base64
 import subprocess
 
 # Vulnerability 1: Hardcoded credentials
-AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
-AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-DB_PASSWORD = "super_secret_db_password_123"
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 def get_user(username):
     # Vulnerability 2: SQL Injection (f-string)
