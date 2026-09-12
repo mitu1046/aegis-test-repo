@@ -16,13 +16,13 @@ import base64
 app = Flask(__name__)
 
 # Vulnerability 1: Hardcoded secret key
-app.secret_key = "hardcoded_secret_key_123"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key")
 
 # Vulnerability 2: Hardcoded JWT secret
-JWT_SECRET = "super_secret_jwt_key"
+JWT_SECRET = os.getenv("JWT_SECRET", "default_jwt_secret")
 
 # Vulnerability 3: Hardcoded database credentials
-DATABASE_URL = "postgresql://admin:password123@localhost/mydb"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password123@localhost/mydb")
 
 @app.route('/login', methods=['POST'])
 def login():
